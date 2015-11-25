@@ -38,4 +38,5 @@
     <bool name="config_conference_call_show_participant_status">false</bool>
 
     <bool name="ims_call_type_enabled">false</bool>
+    <bool name="call_duration_enabled">true</bool>
 </resources>
