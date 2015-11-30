@@ -37,4 +37,5 @@
     <bool name="add_multi_participants_enabled">false</bool>
     <bool name="config_conference_call_show_participant_status">false</bool>
 
+    <bool name="ims_call_type_enabled">false</bool>
 </resources>

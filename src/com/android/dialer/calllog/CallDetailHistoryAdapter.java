@@ -33,6 +33,7 @@ import com.android.dialer.util.DialerUtils;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
+import android.util.Log;
 
 /**
  * Adapter for a ListView containing history items from the details of a call.
@@ -42,6 +43,12 @@ public class CallDetailHistoryAdapter extends BaseAdapter {
     private static final int VIEW_TYPE_HEADER = 0;
     /** Each history item shows the detail of a call. */
     private static final int VIEW_TYPE_HISTORY_ITEM = 1;
+
+    /* Temporarily remove below values from "framework/base" due to the code of framework/base
+           can't merge to atel.lnx.1.0-dev.1.0. */
+    private static final int INCOMING_IMS_TYPE = 5;
+    private static final int OUTGOING_IMS_TYPE = 6;
+    private static final int MISSED_IMS_TYPE = 7;
 
     private final Context mContext;
     private final LayoutInflater mLayoutInflater;
@@ -125,10 +132,30 @@ public class CallDetailHistoryAdapter extends BaseAdapter {
         int callType = details.callTypes[0];
         boolean isVideoCall = (details.features & Calls.FEATURES_VIDEO) == Calls.FEATURES_VIDEO
                 && CallUtil.isVideoEnabled(mContext);
-
+        boolean isVoLTE = (callType == INCOMING_IMS_TYPE) ||
+                          (callType == OUTGOING_IMS_TYPE) ||
+                          (callType == MISSED_IMS_TYPE);
+        Log.d("CallDetailHistoryAdapter", "isVideoCall = " + isVideoCall
+                    + ", isVoLTE = " + isVoLTE);
         callTypeIconView.clear();
         callTypeIconView.add(callType);
         callTypeIconView.setShowVideo(isVideoCall);
+        boolean imsCallLogEnabled = mContext.getResources()
+                .getBoolean(R.bool.ims_call_type_enabled);
+        if (!imsCallLogEnabled) {
+            switch (callType) {
+                case INCOMING_IMS_TYPE:
+                    callType = Calls.INCOMING_TYPE;
+                    break;
+                case OUTGOING_IMS_TYPE:
+                    callType = Calls.OUTGOING_TYPE;
+                    break;
+                case MISSED_IMS_TYPE:
+                    callType = Calls.MISSED_TYPE;
+                    break;
+                default:
+            }
+        }
         callTypeTextView.setText(mCallTypeHelper.getCallTypeText(callType, isVideoCall));
         // Set the date.
         CharSequence dateValue = DateUtils.formatDateRange(mContext, details.date, details.date,

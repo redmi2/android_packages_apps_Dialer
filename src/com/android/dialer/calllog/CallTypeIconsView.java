@@ -46,6 +46,12 @@ public class CallTypeIconsView extends View {
     private int mWidth;
     private int mHeight;
 
+    /* Temporarily remove below values from "framework/base" due to the code of framework/base
+            can't merge to atel.lnx.1.0-dev.1.0. */
+    private static final int INCOMING_IMS_TYPE = 5;
+    private static final int OUTGOING_IMS_TYPE = 6;
+    private static final int MISSED_IMS_TYPE = 7;
+
     public CallTypeIconsView(Context context) {
         this(context, null);
     }
@@ -107,10 +113,13 @@ public class CallTypeIconsView extends View {
     private Drawable getCallTypeDrawable(int callType) {
         switch (callType) {
             case Calls.INCOMING_TYPE:
+            case INCOMING_IMS_TYPE:
                 return mResources.incoming;
             case Calls.OUTGOING_TYPE:
+            case OUTGOING_IMS_TYPE:
                 return mResources.outgoing;
             case Calls.MISSED_TYPE:
+            case MISSED_IMS_TYPE:
                 return mResources.missed;
             case Calls.VOICEMAIL_TYPE:
                 return mResources.voicemail;

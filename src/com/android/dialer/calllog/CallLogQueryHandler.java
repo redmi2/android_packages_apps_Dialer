@@ -60,6 +60,12 @@ public class CallLogQueryHandler extends NoNullCursorAsyncQueryHandler {
     /** The token for the query to fetch voicemail status messages. */
     private static final int QUERY_VOICEMAIL_STATUS_TOKEN = 57;
 
+    /* Temporarily remove below values from "framework/base" due to the code of framework/base
+            can't merge to atel.lnx.1.0-dev.1.0. */
+    private static final int INCOMING_IMS_TYPE = 5;
+    private static final int OUTGOING_IMS_TYPE = 6;
+    private static final int MISSED_IMS_TYPE = 7;
+
     private final int mLogLimit;
 
     /**
@@ -166,9 +172,27 @@ public class CallLogQueryHandler extends NoNullCursorAsyncQueryHandler {
         }
 
         if (callType > CALL_TYPE_ALL) {
-            where.append(" AND ");
-            where.append(String.format("(%s = ?)", Calls.TYPE));
+            if (where.length() > 0) {
+                where.append(" AND ");
+            }
+
+            if ((callType == Calls.INCOMING_TYPE) || (callType == Calls.OUTGOING_TYPE)
+                    || (callType == Calls.MISSED_TYPE)) {
+                where.append(String.format("(%s = ? OR %s = ?)",
+                        Calls.TYPE, Calls.TYPE));
+            } else {
+                // Add a clause to fetch only items of type voicemail.
+                where.append(String.format("(%s = ?)", Calls.TYPE));
+            }
+            // Add a clause to fetch only items newer than the requested date
             selectionArgs.add(Integer.toString(callType));
+            if (callType == Calls.INCOMING_TYPE) {
+                selectionArgs.add(Integer.toString(INCOMING_IMS_TYPE));
+            } else if (callType == Calls.OUTGOING_TYPE) {
+                selectionArgs.add(Integer.toString(OUTGOING_IMS_TYPE));
+            } else if (callType == Calls.MISSED_TYPE) {
+                selectionArgs.add(Integer.toString(MISSED_IMS_TYPE));
+            }
         } else {
             where.append(" AND NOT ");
             where.append("(" + Calls.TYPE + " = " + Calls.VOICEMAIL_TYPE + ")");
