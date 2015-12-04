@@ -923,6 +923,10 @@ public class DialpadFragment extends Fragment
             public void show() {
                 final Menu menu = getMenu();
 
+                final MenuItem conferDialerOption
+                        = menu.findItem(R.id.menu_add_to_4g_conference_call);
+                conferDialerOption.setVisible(CallUtil.isConferDialerEnabled(getActivity()));
+
                 boolean enable = !isDigitsEmpty();
                 for (int i = 0; i < menu.size(); i++) {
                     MenuItem item = menu.getItem(i);
@@ -1596,6 +1600,9 @@ public class DialpadFragment extends Fragment
             case R.id.menu_call_with_note:
                 CallSubjectDialog.start(getActivity(), mDigits.getText().toString());
                 hideAndClearDialpad(false);
+            case R.id.menu_add_to_4g_conference_call:
+                getActivity().startActivity(CallUtil.getConferenceDialerIntent(
+                        mDigits.getText().toString()));
                 return true;
             default:
                 return false;
