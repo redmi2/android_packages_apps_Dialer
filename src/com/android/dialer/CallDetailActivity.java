@@ -63,6 +63,7 @@ import com.android.dialer.util.DialerUtils;
 import com.android.dialer.util.IntentUtil;
 import com.android.dialer.util.PhoneNumberUtil;
 import com.android.dialer.util.TelecomUtil;
+import com.android.phone.common.util.FirewallUtils;
 
 import java.util.List;
 
@@ -226,6 +227,8 @@ public class CallDetailActivity extends Activity
     private boolean mHasEditNumberBeforeCallOption;
     private boolean mHasReportMenuOption;
 
+    private boolean mHasInstallFireWallOption;
+
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -270,6 +273,7 @@ public class CallDetailActivity extends Activity
     public void onResume() {
         super.onResume();
         getCallDetails();
+        mHasInstallFireWallOption = FirewallUtils.isFireWallInstalled(this);
     }
 
     public void getCallDetails() {
@@ -341,6 +345,10 @@ public class CallDetailActivity extends Activity
         menu.findItem(R.id.menu_report)
                 .setVisible(mHasReportMenuOption)
                 .setOnMenuItemClickListener(this);
+        menu.findItem(R.id.menu_add_to_black_list).setVisible(mHasInstallFireWallOption
+                && !FirewallUtils.isNumberInFirewall(this, true, mNumber));
+        menu.findItem(R.id.menu_add_to_white_list).setVisible(mHasInstallFireWallOption
+                && !FirewallUtils.isNumberInFirewall(this, false, mNumber));
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -371,5 +379,13 @@ public class CallDetailActivity extends Activity
 
     private void closeSystemDialogs() {
         sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
+    }
+
+    public void onMenuAddToBlackList(MenuItem menuItem) {
+        FirewallUtils.tryAddingNumberIntoBlacklist(this, mNumber);
+    }
+
+    public void onMenuAddToWhiteList(MenuItem menuItem) {
+        FirewallUtils.tryAddingNumberIntoWhitelist(this, mNumber);
     }
 }
