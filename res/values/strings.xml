@@ -827,4 +827,7 @@
 
     <!-- Shown as a message that notifies the user that the Phone app cannot write to system settings, which is why the system settings app is being launched directly instead.-->
     <string name="toast_cannot_write_system_settings">Phone app does not have permission to write to system settings.</string>
+
+    <string name="call_log_show_all_slots">All SIMs</string>
+    <string name="call_log_all_calls_header">All calls</string>
 </resources>
