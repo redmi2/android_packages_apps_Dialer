@@ -91,8 +91,8 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
 
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
-    private CallLogAdapter mAdapter;
-    private CallLogQueryHandler mCallLogQueryHandler;
+    protected CallLogAdapter mAdapter;
+    protected CallLogQueryHandler mCallLogQueryHandler;
     private VoicemailPlaybackPresenter mVoicemailPlaybackPresenter;
     private boolean mScrollToTop;
 

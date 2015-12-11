@@ -829,5 +829,8 @@
     <string name="toast_cannot_write_system_settings">Phone app does not have permission to write to system settings.</string>
 
     <string name="call_log_show_all_slots">All SIMs</string>
+
     <string name="call_log_all_calls_header">All calls</string>
+
+    <string name="calllog_search_hint">"Search call log"</string>
 </resources>
