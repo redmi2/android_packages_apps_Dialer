@@ -310,5 +310,13 @@
                 <action android:name="android.telecom.InCallService"/>
             </intent-filter>
         </service>
+
+        <activity android:name=".SpeedDialListActivity"
+            android:theme="@style/DialtactsTheme"
+            android:label="@string/speed_dial_settings" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
