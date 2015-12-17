@@ -61,6 +61,7 @@ import android.support.v4.app.ActivityCompat;
 
 import com.android.contacts.common.CallUtil;
 import com.android.contacts.common.activity.TransactionSafeActivity;
+import com.android.contacts.common.CallUtil;
 import com.android.contacts.common.dialog.ClearFrequentsDialog;
 import com.android.contacts.common.interactions.ImportExportDialogFragment;
 import com.android.contacts.common.interactions.TouchPointManager;
@@ -1364,6 +1365,15 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
             // Invalid phone number, but let the call go through so that InCallUI can show
             // an error message.
             phoneNumber = "";
+        }
+        if (isVideoCall && (CallUtil.isVideoEnabled(this))) {
+            if (getResources().getBoolean(
+                    R.bool.config_regional_number_patterns_video_call) &&
+                    !CallUtil.isVideoCallNumValid(phoneNumber)) {
+                Toast.makeText(this,
+                        R.string.toast_make_video_call_failed, Toast.LENGTH_LONG).show();
+                 return;
+            }
         }
         Intent intent = isVideoCall ?
                 IntentUtil.getVideoCallIntent(phoneNumber, getCallOrigin()) :
