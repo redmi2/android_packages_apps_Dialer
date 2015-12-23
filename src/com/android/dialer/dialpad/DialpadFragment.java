@@ -295,6 +295,7 @@ public class DialpadFragment extends Fragment
     private boolean mStartedFromNewIntent = false;
     private boolean mFirstLaunch = false;
     private boolean mAnimate = false;
+    private TextView mPhoneAccountLabel;
 
     private static final String PREF_DIGITS_FILLED_BY_INTENT = "pref_digits_filled_by_intent";
 
@@ -445,6 +446,8 @@ public class DialpadFragment extends Fragment
         floatingActionButton.setOnClickListener(this);
         mFloatingActionButtonController = new FloatingActionButtonController(getActivity(),
                 floatingActionButtonContainer, floatingActionButton);
+        mPhoneAccountLabel = (TextView)fragmentView.findViewById(
+                R.id.dialpad_floating_phone_account_label);
         Trace.endSection();
         Trace.endSection();
         return fragmentView;
@@ -718,6 +721,19 @@ public class DialpadFragment extends Fragment
         }
 
         mFirstLaunch = false;
+
+        PhoneAccountHandle accountHandle = getTelecomManager()
+                .getUserSelectedOutgoingPhoneAccount();
+        boolean showAccountLabel = getContext().getResources().getBoolean(
+                R.bool.config_show_operator);
+        if (showAccountLabel && accountHandle != null) {
+            String label = PhoneAccountUtils.getAccountLabel(getContext(), accountHandle);
+            mPhoneAccountLabel.setVisibility(View.VISIBLE);
+            mPhoneAccountLabel.setText(label);
+        } else {
+            mPhoneAccountLabel.setVisibility(View.GONE);
+        }
+
         Trace.endSection();
     }
 
