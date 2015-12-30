@@ -37,12 +37,24 @@ public class CallTypeHelper {
     private final CharSequence mOutgoingVideoName;
     /** Name used to identify missed video calls. */
     private final CharSequence mMissedVideoName;
+    /** Name used to identify incoming video calls. */
+    private final CharSequence mIncomingVoLTEName;
+    /** Name used to identify outgoing video calls. */
+    private final CharSequence mOutgoingVoLTEName;
+    /** Name used to identify missed video calls. */
+    private final CharSequence mMissedVoLTEName;
     /** Name used to identify voicemail calls. */
     private final CharSequence mVoicemailName;
     /** Color used to identify new missed calls. */
     private final int mNewMissedColor;
     /** Color used to identify new voicemail calls. */
     private final int mNewVoicemailColor;
+
+    /* Temporarily remove below values from "framework/base" due to the code of framework/base
+           can't merge to atel.lnx.1.0-dev.1.0. */
+    private static final int INCOMING_IMS_TYPE = 5;
+    private static final int OUTGOING_IMS_TYPE = 6;
+    private static final int MISSED_IMS_TYPE = 7;
 
     public CallTypeHelper(Resources resources) {
         // Cache these values so that we do not need to look them up each time.
@@ -52,6 +64,9 @@ public class CallTypeHelper {
         mIncomingVideoName = resources.getString(R.string.type_incoming_video);
         mOutgoingVideoName = resources.getString(R.string.type_outgoing_video);
         mMissedVideoName = resources.getString(R.string.type_missed_video);
+        mIncomingVoLTEName = resources.getString(R.string.type_incoming_volte);
+        mOutgoingVoLTEName = resources.getString(R.string.type_outgoing_volte);
+        mMissedVoLTEName = resources.getString(R.string.type_missed_volte);
         mVoicemailName = resources.getString(R.string.type_voicemail);
         mNewMissedColor = resources.getColor(R.color.call_log_missed_call_highlight_color);
         mNewVoicemailColor = resources.getColor(R.color.call_log_voicemail_highlight_color);
@@ -67,6 +82,13 @@ public class CallTypeHelper {
                     return mIncomingName;
                 }
 
+            case INCOMING_IMS_TYPE:
+                if (isVideoCall) {
+                    return mIncomingVideoName;
+                } else {
+                    return mIncomingVoLTEName;
+                }
+
             case Calls.OUTGOING_TYPE:
                 if (isVideoCall) {
                     return mOutgoingVideoName;
@@ -74,11 +96,25 @@ public class CallTypeHelper {
                     return mOutgoingName;
                 }
 
+            case OUTGOING_IMS_TYPE:
+                if (isVideoCall) {
+                    return mOutgoingVideoName;
+                } else {
+                    return mOutgoingVoLTEName;
+                }
+
             case Calls.MISSED_TYPE:
                 if (isVideoCall) {
                     return mMissedVideoName;
                 } else {
                     return mMissedName;
+                }
+
+            case MISSED_IMS_TYPE:
+                if (isVideoCall) {
+                    return mMissedVideoName;
+                } else {
+                    return mMissedVoLTEName;
                 }
 
             case Calls.VOICEMAIL_TYPE:
@@ -93,14 +129,17 @@ public class CallTypeHelper {
     public Integer getHighlightedColor(int callType) {
         switch (callType) {
             case Calls.INCOMING_TYPE:
+            case INCOMING_IMS_TYPE:
                 // New incoming calls are not highlighted.
                 return null;
 
             case Calls.OUTGOING_TYPE:
+            case OUTGOING_IMS_TYPE:
                 // New outgoing calls are not highlighted.
                 return null;
 
             case Calls.MISSED_TYPE:
+            case MISSED_IMS_TYPE:
                 return mNewMissedColor;
 
             case Calls.VOICEMAIL_TYPE:
@@ -116,6 +155,8 @@ public class CallTypeHelper {
 
     public static boolean isMissedCallType(int callType) {
         return (callType != Calls.INCOMING_TYPE && callType != Calls.OUTGOING_TYPE &&
+                callType != INCOMING_IMS_TYPE &&
+                callType != OUTGOING_IMS_TYPE &&
                 callType != Calls.VOICEMAIL_TYPE);
     }
 }

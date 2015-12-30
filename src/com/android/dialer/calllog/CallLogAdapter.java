@@ -99,6 +99,7 @@ public class CallLogAdapter extends GroupingListAdapter
     private final CallFetcher mCallFetcher;
 
     protected ContactInfoCache mContactInfoCache;
+    private String mFilterString;
 
     private boolean mIsShowingRecentsTab;
 
@@ -791,5 +792,9 @@ public class CallLogAdapter extends GroupingListAdapter
 
         PromoCardViewHolder viewHolder = PromoCardViewHolder.create(view);
         return viewHolder;
+    }
+
+    public void setQueryString(String filter) {
+        mFilterString = filter;
     }
 }

@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.android.dialer.SpeedDialListActivity;
 import com.android.internal.telephony.ConfigResourceUtil;
 import com.android.contacts.common.util.PermissionsUtil;
 import com.android.dialer.R;
@@ -55,6 +56,14 @@ public class DialerSettingsActivity extends PreferenceActivity {
             quickResponseSettingsHeader.intent = quickResponseSettingsIntent;
             target.add(quickResponseSettingsHeader);
         }
+
+        Header speedDialSettingsHeader = new Header();
+        Intent speedDialSettingsIntent = new Intent(this, SpeedDialListActivity.class);
+        speedDialSettingsIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        speedDialSettingsHeader.titleRes = R.string.speed_dial_settings;
+        speedDialSettingsHeader.intent = speedDialSettingsIntent;
+        target.add(speedDialSettingsHeader);
 
         TelephonyManager telephonyManager =
                 (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);

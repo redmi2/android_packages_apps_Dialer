@@ -79,6 +79,8 @@ import com.android.dialer.DialtactsActivity;
 import com.android.dialer.NeededForReflection;
 import com.android.dialer.R;
 import com.android.dialer.SpecialCharSequenceMgr;
+import com.android.dialer.SpeedDialListActivity;
+import com.android.dialer.SpeedDialUtils;
 import com.android.dialer.calllog.PhoneAccountUtils;
 import com.android.dialer.util.DialerUtils;
 import com.android.dialer.util.IntentUtil;
@@ -295,6 +297,7 @@ public class DialpadFragment extends Fragment
     private boolean mStartedFromNewIntent = false;
     private boolean mFirstLaunch = false;
     private boolean mAnimate = false;
+    private TextView mPhoneAccountLabel;
 
     private static final String PREF_DIGITS_FILLED_BY_INTENT = "pref_digits_filled_by_intent";
 
@@ -445,6 +448,8 @@ public class DialpadFragment extends Fragment
         floatingActionButton.setOnClickListener(this);
         mFloatingActionButtonController = new FloatingActionButtonController(getActivity(),
                 floatingActionButtonContainer, floatingActionButton);
+        mPhoneAccountLabel = (TextView)fragmentView.findViewById(
+                R.id.dialpad_floating_phone_account_label);
         Trace.endSection();
         Trace.endSection();
         return fragmentView;
@@ -622,6 +627,10 @@ public class DialpadFragment extends Fragment
         for (int i = 0; i < buttonIds.length; i++) {
             dialpadKey = (DialpadKeyButton) fragmentView.findViewById(buttonIds[i]);
             dialpadKey.setOnPressedListener(this);
+            // Long-pressing button from two to nine will set up speed key dial.
+            if (i > 0 && i < buttonIds.length - 3) {
+                dialpadKey.setOnLongClickListener(this);
+            }
         }
 
         // Long-pressing one button will initiate Voicemail.
@@ -718,6 +727,19 @@ public class DialpadFragment extends Fragment
         }
 
         mFirstLaunch = false;
+
+        PhoneAccountHandle accountHandle = getTelecomManager()
+                .getUserSelectedOutgoingPhoneAccount();
+        boolean showAccountLabel = getContext().getResources().getBoolean(
+                R.bool.config_show_operator);
+        if (showAccountLabel && accountHandle != null) {
+            String label = PhoneAccountUtils.getAccountLabel(getContext(), accountHandle);
+            mPhoneAccountLabel.setVisibility(View.VISIBLE);
+            mPhoneAccountLabel.setText(label);
+        } else {
+            mPhoneAccountLabel.setVisibility(View.GONE);
+        }
+
         Trace.endSection();
     }
 
@@ -923,6 +945,10 @@ public class DialpadFragment extends Fragment
             public void show() {
                 final Menu menu = getMenu();
 
+                final MenuItem conferDialerOption
+                        = menu.findItem(R.id.menu_add_to_4g_conference_call);
+                conferDialerOption.setVisible(CallUtil.isConferDialerEnabled(getActivity()));
+
                 boolean enable = !isDigitsEmpty();
                 for (int i = 0; i < menu.size(); i++) {
                     MenuItem item = menu.getItem(i);
@@ -1106,6 +1132,31 @@ public class DialpadFragment extends Fragment
                 // To show that, make the cursor visible, and return false, letting the EditText
                 // show the option by itself.
                 mDigits.setCursorVisible(true);
+                return false;
+            }
+            case R.id.two:
+            case R.id.three:
+            case R.id.four:
+            case R.id.five:
+            case R.id.six:
+            case R.id.seven:
+            case R.id.eight:
+            case R.id.nine: {
+                if (mDigits.length() == 1) {
+                    removePreviousDigitIfPossible();
+                    final boolean isAirplaneModeOn =
+                            Settings.System.getInt(getActivity().getContentResolver(),
+                                Settings.System.AIRPLANE_MODE_ON, 0) != 0;
+                    if (isAirplaneModeOn) {
+                        DialogFragment dialogFragment = ErrorDialogFragment.newInstance(
+                                R.string.dialog_speed_dial_airplane_mode_message);
+                        dialogFragment.show(getFragmentManager(),
+                                "speed_dial_request_during_airplane_mode");
+                    } else {
+                        callSpeedNumber(id);
+                    }
+                    return true;
+                }
                 return false;
             }
         }
@@ -1596,6 +1647,9 @@ public class DialpadFragment extends Fragment
             case R.id.menu_call_with_note:
                 CallSubjectDialog.start(getActivity(), mDigits.getText().toString());
                 hideAndClearDialpad(false);
+            case R.id.menu_add_to_4g_conference_call:
+                getActivity().startActivity(CallUtil.getConferenceDialerIntent(
+                        mDigits.getText().toString()));
                 return true;
             default:
                 return false;
@@ -1838,6 +1892,49 @@ public class DialpadFragment extends Fragment
                 mPseudoEmergencyAnimator.end();
             }
         }
+    }
+
+    private void callSpeedNumber(int id) {
+        int number;
+
+        switch(id) {
+            case R.id.two: number = 2; break;
+            case R.id.three: number = 3; break;
+            case R.id.four: number = 4; break;
+            case R.id.five: number = 5; break;
+            case R.id.six: number = 6; break;
+            case R.id.seven: number = 7; break;
+            case R.id.eight: number = 8; break;
+            case R.id.nine: number = 9; break;
+            default: return;
+        }
+
+        String phoneNumber = SpeedDialUtils.getNumber(getActivity(), number);
+        if (phoneNumber == null) {
+            showNoSpeedNumberDialog(number);
+        } else {
+            final DialtactsActivity activity = getActivity() instanceof DialtactsActivity
+                    ? (DialtactsActivity) getActivity() : null;
+            final Intent intent = CallUtil.getCallIntent(phoneNumber);
+            DialerUtils.startActivityWithErrorToast(getActivity(), intent);
+            hideAndClearDialpad(false);
+        }
+    }
+
+    private void showNoSpeedNumberDialog(final int number) {
+        new AlertDialog.Builder(getActivity())
+                .setTitle(R.string.speed_dial_unassigned_dialog_title)
+                .setMessage(getString(R.string.speed_dial_unassigned_dialog_message, number))
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // go to speed dial setting screen to set speed dial number.
+                        Intent intent = new Intent(getActivity(), SpeedDialListActivity.class);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton(R.string.no, null)
+                .show();
     }
 
 }

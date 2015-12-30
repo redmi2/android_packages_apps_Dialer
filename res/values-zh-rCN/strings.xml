@@ -95,6 +95,9 @@
     <string name="type_incoming_video" msgid="82323391702796181">"视频通话来电"</string>
     <string name="type_outgoing_video" msgid="2858140021680755266">"拨出的视频通话"</string>
     <string name="type_missed_video" msgid="954396897034220545">"错过的视频通话"</string>
+    <string name="type_incoming_volte">4G语音通话来电</string>
+    <string name="type_outgoing_volte">外拨4G语音通话</string>
+    <string name="type_missed_volte">未接4G语音通话</string>
     <string name="type_voicemail" msgid="5153139450668549908">"语音信箱"</string>
     <string name="actionIncomingCall" msgid="6028930669817038600">"来电"</string>
     <string name="description_call_log_play_button" msgid="651182125650429846">"播放语音邮件"</string>
@@ -209,4 +212,19 @@
     <string name="permission_no_search" msgid="84152933267902056">"要搜索您的联系人，请开启“通讯录”权限。"</string>
     <string name="permission_place_call" msgid="7588803619716288478">"要拨打电话，\n请开启“电话”权限。"</string>
     <string name="toast_cannot_write_system_settings" msgid="5614246168296606709">"电话应用不具备写入系统设置的权限。"</string>
+    <string name="calllog_search_hint">"搜索通话记录"</string>
+    <string name="add_to_white_list">加入白名单</string>
+    <string name="add_to_black_list">加入黑名单</string>
+    <string name="speed_dial_settings">快速拨号设置</string>
+    <string name="speed_dial_not_set">(未设置)</string>
+    <string name="speed_dial_replace">替换</string>
+    <string name="speed_dial_delete">删除</string>
+    <string name="speed_dial_unassigned_dialog_title">按键未分配</string>
+    <string name="speed_dial_unassigned_dialog_message">没有设置快速拨号,现在设置？</string>
+    <string name="dialog_speed_dial_airplane_mode_message">关飞行模式后使用快速拨号</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="input_number">"输入号码"</string>
+    <string name="speed_dial_cancel">"取消"</string>
+    <string name="speed_dial_ok">"确定"</string>
 </resources>

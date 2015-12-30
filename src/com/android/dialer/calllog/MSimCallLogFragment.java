@@ -62,6 +62,13 @@ import com.android.dialer.voicemail.VoicemailStatusHelperImpl;
 import com.android.dialer.widget.EmptyContentView;
 import com.android.dialer.widget.EmptyContentView.OnEmptyViewActionButtonClickedListener;
 import com.android.dialerbind.ObjectFactory;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.util.Log;
+import android.preference.PreferenceManager;
+import android.telephony.TelephonyManager;
 
 import java.util.List;
 
@@ -69,7 +76,7 @@ import java.util.List;
  * Displays a list of call log entries. To filter for a particular kind of call
  * (all, missed or voicemails), specify it in the constructor.
  */
-public class CallLogFragment extends Fragment implements CallLogQueryHandler.Listener,
+public class MSimCallLogFragment extends Fragment implements CallLogQueryHandler.Listener,
         CallLogAdapter.CallFetcher, OnEmptyViewActionButtonClickedListener {
     private static final String TAG = "CallLogFragment";
 
@@ -91,7 +98,7 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
 
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
-    protected CallLogAdapter mAdapter;
+    private CallLogAdapter mAdapter;
     protected CallLogQueryHandler mCallLogQueryHandler;
     private VoicemailPlaybackPresenter mVoicemailPlaybackPresenter;
     private boolean mScrollToTop;
@@ -107,6 +114,16 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
     private boolean mVoicemailStatusFetched;
 
     private final Handler mHandler = new Handler();
+
+    // The Spinners to filter call log.
+    private Spinner mFilterSubSpinnerView;
+    private Spinner mFilterStatusSpinnerView;
+    // Default to all slots.
+    private int mCallSubFilter = CallLogQueryHandler.CALL_SUB_ALL;
+    /**
+     * Key for the call log sub saved in the default preference.
+     */
+    private static final String PREFERENCE_KEY_CALLLOG_SUB = "call_log_sub";
 
     private class CustomContentObserver extends ContentObserver {
         public CustomContentObserver() {
@@ -130,7 +147,7 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
     private boolean mMenuVisible = true;
 
     // Default to all calls.
-    private int mCallTypeFilter = CallLogQueryHandler.CALL_TYPE_ALL;
+    protected int mCallTypeFilter = CallLogQueryHandler.CALL_TYPE_ALL;
 
     // Log limit - if no limit is specified, then the default in {@link CallLogQueryHandler}
     // will be used.
@@ -150,15 +167,15 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
         public void showDialpad();
     }
 
-    public CallLogFragment() {
+    public MSimCallLogFragment() {
         this(CallLogQueryHandler.CALL_TYPE_ALL, NO_LOG_LIMIT);
     }
 
-    public CallLogFragment(int filterType) {
+    public MSimCallLogFragment(int filterType) {
         this(filterType, NO_LOG_LIMIT);
     }
 
-    public CallLogFragment(int filterType, int logLimit) {
+    public MSimCallLogFragment(int filterType, int logLimit) {
         this(filterType, logLimit, NO_DATE_LIMIT);
     }
 
@@ -168,7 +185,7 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
      * @param filterType type of calls to include.
      * @param dateLimit limits results to calls occurring on or after the specified date.
      */
-    public CallLogFragment(int filterType, long dateLimit) {
+    public MSimCallLogFragment(int filterType, long dateLimit) {
         this(filterType, NO_LOG_LIMIT, dateLimit);
     }
 
@@ -179,7 +196,7 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
      * @param logLimit limits the number of results to return.
      * @param dateLimit limits results to calls occurring on or after the specified date.
      */
-    public CallLogFragment(int filterType, int logLimit, long dateLimit) {
+    public MSimCallLogFragment(int filterType, int logLimit, long dateLimit) {
         mCallTypeFilter = filterType;
         mLogLimit = logLimit;
         mDateLimit = dateLimit;
@@ -221,6 +238,7 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
             // Return false; we did not take ownership of the cursor
             return false;
         }
+
         mAdapter.setLoading(false);
         mAdapter.changeCursor(cursor);
         // This will update the state of the "Clear call log" menu item.
@@ -283,7 +301,7 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedState) {
-        View view = inflater.inflate(R.layout.call_log_fragment, container, false);
+        View view = inflater.inflate(R.layout.msim_call_log_fragment, container, false);
 
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(true);
@@ -292,6 +310,10 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
         mEmptyListView = (EmptyContentView) view.findViewById(R.id.empty_list_view);
         mEmptyListView.setImage(R.drawable.empty_call_log);
         mEmptyListView.setActionClickedListener(this);
+        mFilterSubSpinnerView = (Spinner) view.findViewById(R.id.filter_sub_spinner);
+        mFilterStatusSpinnerView = (Spinner) view.findViewById(R.id.filter_status_spinner);
+        // Update the filter views.
+        updateFilterSpinnerViews();
 
         String currentCountryIso = GeoUtil.getCurrentCountryIso(getActivity());
         boolean isShowingRecentsTab = mLogLimit != NO_LOG_LIMIT || mDateLimit != NO_DATE_LIMIT;
@@ -327,6 +349,7 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
     @Override
     public void onResume() {
         super.onResume();
+
         final boolean hasReadCallLogPermission =
                 PermissionsUtil.hasPermission(getActivity(), READ_CALL_LOG);
         if (!mHasReadCallLogPermission && hasReadCallLogPermission) {
@@ -444,7 +467,7 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
     }
 
     /** Requests updates to the data to be shown. */
-    private void refreshData() {
+    protected void refreshData() {
         // Prevent unnecessary refresh.
         if (mRefreshDataRequired) {
             // Mark all entries in the contact info cache as out of date, so they will be looked up
@@ -511,4 +534,98 @@ public class CallLogFragment extends Fragment implements CallLogQueryHandler.Lis
             }
         }
     }
+
+    private OnItemSelectedListener mSubSelectedListener = new OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            Log.i(TAG, "Sub selected, position: " + position);
+            int sub = position - 1;
+            if (sub != mCallSubFilter) {
+                mCallSubFilter = sub;
+                setSelectedSub(sub);
+                fetchCalls();
+            }
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+            // Do nothing.
+        }
+
+    };
+
+    private OnItemSelectedListener mStatusSelectedListener = new OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            Log.i(TAG, "Status selected, position: " + position);
+            int type = ((SpinnerContent)parent.getItemAtPosition(position)).value;
+            if (type != mCallTypeFilter) {
+                mCallTypeFilter = type;
+                fetchCalls();
+            }
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+            // Do nothing.
+        }
+
+    };
+
+    /**
+     * Initialize the filter views content.
+     */
+    private void updateFilterSpinnerViews() {
+        if (mFilterSubSpinnerView == null
+                || mFilterStatusSpinnerView == null) {
+            Log.w(TAG, "The filter spinner view is null!");
+            return;
+        }
+
+        // Update the sub filter's content.
+        final TelephonyManager telephony = (TelephonyManager) getActivity().getSystemService(
+                Context.TELEPHONY_SERVICE);
+        if (!telephony.isMultiSimEnabled()) {
+            mFilterSubSpinnerView.setVisibility(View.GONE);
+        }else{
+            ArrayAdapter<SpinnerContent> filterSubAdapter = new ArrayAdapter<SpinnerContent>(
+                    getActivity(), R.layout.msim_call_log_spinner_item,
+                    SpinnerContent.setupSubFilterContent(getActivity()));
+            if (filterSubAdapter.getCount() <= 1) {
+                mFilterSubSpinnerView.setVisibility(View.GONE);
+            }else{
+                mCallSubFilter = getSelectedSub();
+                mFilterSubSpinnerView.setAdapter(filterSubAdapter);
+                mFilterSubSpinnerView.setOnItemSelectedListener(mSubSelectedListener);
+                SpinnerContent.setSpinnerContentValue(mFilterSubSpinnerView, mCallSubFilter);
+            }
+        }
+        // Update the status filter's content.
+        ArrayAdapter<SpinnerContent> filterStatusAdapter = new ArrayAdapter<SpinnerContent>(
+                getActivity(), R.layout.msim_call_log_spinner_item,
+                SpinnerContent.setupStatusFilterContent(getActivity()));
+        mFilterStatusSpinnerView.setAdapter(filterStatusAdapter);
+        mFilterStatusSpinnerView.setOnItemSelectedListener(mStatusSelectedListener);
+        SpinnerContent.setSpinnerContentValue(mFilterStatusSpinnerView, mCallTypeFilter);
+    }
+
+    /**
+     * @return the saved selected subscription.
+     */
+    private int getSelectedSub() {
+        // Get the saved selected sub, and the default value is display all.
+        int sub = PreferenceManager.getDefaultSharedPreferences(this.getActivity()).getInt(
+                PREFERENCE_KEY_CALLLOG_SUB, CallLogQueryHandler.CALL_SUB_ALL);
+        return sub;
+    }
+
+    /**
+     * Save the selected subscription to preference.
+     */
+    private void setSelectedSub(int sub) {
+        // Save the selected sub to the default preference.
+        PreferenceManager.getDefaultSharedPreferences(this.getActivity()).edit()
+                .putInt(PREFERENCE_KEY_CALLLOG_SUB, sub).commit();
+    }
+
 }
