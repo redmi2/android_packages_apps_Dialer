@@ -884,4 +884,6 @@
     <string name="alert_call_no_cellular_coverage">No cellular network available. Connect to available Wi-Fi to make calls.</string>
 
     <string name="alert_user_connect_to_wifi_for_call">Connect to Wi-Fi to make calls.</string>
+
+    <string name="video_call">Video Calling</string>
 </resources>
