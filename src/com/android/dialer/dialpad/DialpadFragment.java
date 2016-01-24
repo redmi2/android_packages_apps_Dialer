@@ -1376,7 +1376,7 @@ public class DialpadFragment extends Fragment
                     clearDialpad();
                 } else {
                     final Intent intent = CallUtil.getCallIntent(number);
-                    if (!isDigitsShown) {
+                    if (!isDigitsShown && !PhoneNumberUtils.isEmergencyNumber(number)) {
                         // must be dial conference add extra
                         intent.putExtra(EXTRA_DIAL_CONFERENCE_URI, true);
                     }
