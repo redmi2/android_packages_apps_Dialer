@@ -64,6 +64,8 @@ import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.QuickContactBadge;
 import android.widget.TextView;
+import android.content.pm.PackageManager;
+import static android.Manifest.permission.READ_CONTACTS;
 
 import com.android.contacts.common.ContactPhotoManager;
 import com.android.contacts.common.ContactPhotoManager.DefaultImageRequest;
@@ -109,6 +111,8 @@ public class SpeedDialListActivity extends ListActivity implements
     private static final int COLUMN_NORMALIZED = 4;
     private static final int MENU_REPLACE = 1001;
     private static final int MENU_DELETE = 1002;
+    private static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 1;
+    private boolean mStartSearch = true;
 
     private static class Record {
         long contactId;
@@ -204,25 +208,51 @@ public class SpeedDialListActivity extends ListActivity implements
     private Record getRecordFromQuery(Uri uri, String[] projection) {
         Record record = null;
         Cursor cursor = null;
-        try {
-            cursor = getContentResolver().query(uri, projection, null, null, null);
-            if (cursor != null && cursor.moveToFirst()) {
-                record = new Record(cursor.getString(COLUMN_NUMBER));
-                record.contactId = cursor.getLong(COLUMN_ID);
-                record.photoId = cursor.getLong(COLUMN_PHOTO);
-                record.name = cursor.getString(COLUMN_NAME);
-                record.normalizedNumber = cursor.getString(COLUMN_NORMALIZED);
-                if (record.normalizedNumber == null) {
-                    record.normalizedNumber = record.number;
-                }
+        if (mStartSearch) {
+            if (checkSelfPermission(READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{READ_CONTACTS},
+                        MY_PERMISSIONS_REQUEST_READ_CONTACTS);
+                return record;
             }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
+            try {
+                cursor = getContentResolver().query(uri, projection, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    record = new Record(cursor.getString(COLUMN_NUMBER));
+                    record.contactId = cursor.getLong(COLUMN_ID);
+                    record.photoId = cursor.getLong(COLUMN_PHOTO);
+                    record.name = cursor.getString(COLUMN_NAME);
+                    record.normalizedNumber = cursor.getString(COLUMN_NORMALIZED);
+                    if (record.normalizedNumber == null) {
+                        record.normalizedNumber = record.number;
+                    }
+                }
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
             }
         }
         return record;
     }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_CONTACTS:
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    mStartSearch = true;
+                    return;
+                    } else {
+                    mStartSearch = false;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
 
     private void showAddSpeedDialDialog(final int number) {
         mPickNumber = number;
@@ -376,6 +406,10 @@ public class SpeedDialListActivity extends ListActivity implements
      * goto contacts, used to set or replace speed number
      */
     private void pickContact(int number) {
+        if (checkSelfPermission(READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{READ_CONTACTS}, MY_PERMISSIONS_REQUEST_READ_CONTACTS);
+            return;
+        }
         mPickNumber = number;
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);
