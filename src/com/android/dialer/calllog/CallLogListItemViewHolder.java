@@ -332,15 +332,16 @@ public final class CallLogListItemViewHolder extends RecyclerView.ViewHolder
         } else {
             callButtonView.setVisibility(View.GONE);
         }
-        boolean showVideoCall = true;
+        boolean showVideoCallBtn = true;
         boolean enablePresence = SystemProperties.getBoolean(
                         "persist.presence.enable", false);
         if (enablePresence) {
-            showVideoCall= DialerUtils.startAvailabilityFetch(number);
+            showVideoCallBtn = DialerUtils.startAvailabilityFetch(number);
+        } else {
+            // If one of the calls had video capabilities, show the video call button.
+            showVideoCallBtn = phoneCallDetailsViews.callTypeIcons.isVideoShown();
         }
-        // If one of the calls had video capabilities, show the video call button.
-        if (mTelecomCallLogCache.isVideoEnabled() && canPlaceCallToNumber &&
-                phoneCallDetailsViews.callTypeIcons.isVideoShown() && showVideoCall) {
+        if (mTelecomCallLogCache.isVideoEnabled() && canPlaceCallToNumber && showVideoCallBtn) {
             videoCallButtonView.setTag(IntentProvider.getReturnVideoCallIntentProvider(number));
             videoCallButtonView.setVisibility(View.VISIBLE);
             if (CallTypeIconsView.isCarrierOneEnabled()) {
