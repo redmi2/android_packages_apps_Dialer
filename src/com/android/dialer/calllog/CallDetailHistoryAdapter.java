@@ -140,8 +140,7 @@ public class CallDetailHistoryAdapter extends BaseAdapter {
             isVideoCall = (details.features & Calls.FEATURES_VIDEO) == Calls.FEATURES_VIDEO
                     && CallUtil.isVideoEnabled(mContext) && showVideoCall;
         } else {
-            isVideoCall = (details.features & Calls.FEATURES_VIDEO) == Calls.FEATURES_VIDEO
-                    && CallUtil.isVideoEnabled(mContext);
+            isVideoCall = (details.features & Calls.FEATURES_VIDEO) == Calls.FEATURES_VIDEO;
         }
         boolean isVoLTE = (callType == INCOMING_IMS_TYPE) ||
                           (callType == OUTGOING_IMS_TYPE) ||
