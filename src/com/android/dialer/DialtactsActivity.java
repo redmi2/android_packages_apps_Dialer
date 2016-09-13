@@ -739,7 +739,8 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
                 mDialpadFragment.showDialConference(false);
             }
             if (mListsFragment.getCurrentTabIndex()
-                    == ListsFragment.TAB_INDEX_ALL_CONTACTS && !mInRegularSearch) {
+                    == ListsFragment.TAB_INDEX_ALL_CONTACTS && !mInRegularSearch &&
+                    !mInDialpadSearch) {
                 DialerUtils.startActivityWithErrorToast(
                         this,
                         IntentUtil.getNewContactIntent(),
@@ -1566,7 +1567,8 @@ public class DialtactsActivity extends TransactionSafeActivity implements View.O
         updateMissedCalls();
         int tabIndex = mListsFragment.getCurrentTabIndex();
         mPreviouslySelectedTabIndex = tabIndex;
-        if (tabIndex == ListsFragment.TAB_INDEX_ALL_CONTACTS) {
+        if (tabIndex == ListsFragment.TAB_INDEX_ALL_CONTACTS &&
+                !mInRegularSearch && !mInDialpadSearch) {
             setConferenceDialButtonVisibility(false);
             mFloatingActionButtonController.changeIcon(
                     getResources().getDrawable(R.drawable.ic_person_add_24dp),
