@@ -1083,9 +1083,8 @@ public class VideoCallPresenter extends Presenter<VideoCallPresenter.VideoCallUi
 
             boolean hidePreview = shallHidePreview(isConf, videoState);
             Log.v(this, "showVideoUi, hidePreview = " + hidePreview);
-            if (hidePreview) {
-                ui.showOutgoingVideoView(!hidePreview);
-            }
+            ui.showOutgoingVideoView(!hidePreview &&
+                    mPictureModeHelper.canShowPreviewVideoView());
 
             if (showOutgoingVideo) {
                 setPreviewSize(mDeviceOrientation, mPreviewAspectRatio);
