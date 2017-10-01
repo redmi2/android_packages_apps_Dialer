@@ -1892,21 +1892,7 @@ public class InCallPresenter implements CallList.Listener,
      * @return returns whether the new orientation mode was set successfully or not.
      */
     public boolean setInCallAllowsOrientationChange(int orientation) {
-        if (mInCallActivity == null) {
-            Log.e(this, "InCallActivity is null. Can't set requested orientation.");
-            return false;
-        }
-        Call call = mCallList.getOutgoingCall();
-        if (call != null && (QtiCallUtils.isVideoCrbtVtCall(mContext, call)
-                    || QtiCallUtils.isVideoCrbtVoLteCall(call))) {
-            Log.d(this, "Unlike orientation change for color ring");
-            return false;
-        }
-
-        mInCallActivity.setRequestedOrientation(orientation);
-        mInCallActivity.enableInCallOrientationEventListener(
-                orientation == InCallOrientationEventListener.FULL_SENSOR_SCREEN_ORIENTATION);
-        return true;
+        return false;
     }
 
     /* returns TRUE if screen is turned ON else false */
